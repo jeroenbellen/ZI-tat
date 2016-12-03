@@ -1,35 +1,32 @@
 package quote
 
-import java.time.ZonedDateTime
-import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
+import akka.actor.{ActorSystem, Props}
+import akka.pattern.ask
+import akka.util.Timeout
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Results}
+import quote.ReadQuotesActor.FindAll
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+
 
 @Singleton
 class QuotesResource @Inject()(quotesAction: QuotesAction)(implicit ex: ExecutionContext) {
 
-  val quotes = List(
-    QuoteJson(UUID.randomUUID().toString,
-      "At any street corner the feeling of absurdity can strike any man in the face.",
-      "Albert Camus",
-      ZonedDateTime.now()
-    ),
-    QuoteJson(UUID.randomUUID().toString,
-      "They always say time changes things, but you actually have to change them yourself.",
-      "Andy Warhol",
-      ZonedDateTime.now()
-    )
-  )
+  implicit val timeout: Timeout = Timeout(100 nano)
+  implicit lazy val system = ActorSystem()
+
+  val readActor = system.actorOf(Props(classOf[ReadQuotesActor]))
 
   def index: Action[AnyContent] = {
     quotesAction async {
-      implicit request => Future.successful {
-        Results.Ok(Json.toJson(quotes))
-      }
+      implicit request => (readActor ? FindAll())
+        .mapTo[List[Quote]]
+        .map(QuoteJson.mapper)
+        .map(quotes => Results.Ok(Json.toJson(quotes)))
     }
   }
 }

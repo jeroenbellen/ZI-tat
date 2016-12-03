@@ -22,4 +22,8 @@ object QuoteJson {
       )
     }
   }
+
+  def apply(quote: Quote): QuoteJson = new QuoteJson(quote.ref, quote.quote, quote.author, quote.created)
+
+  def mapper: (List[Quote] => List[QuoteJson]) = (quotes: List[Quote]) => quotes.map(QuoteJson(_))
 }
