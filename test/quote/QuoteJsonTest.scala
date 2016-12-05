@@ -9,9 +9,9 @@ import play.api.libs.json.{JsValue, Json}
 class QuoteJsonTest extends FlatSpec with Matchers {
 
   "QuoteJson" should "generate a valid json" in {
-    val quote = QuoteJson(UUID.randomUUID().toString, "A quote", "An author", ZonedDateTime.now())
+    val quote = QuoteJson(UUID.randomUUID().toString, "user ref", "A quote", "An author", ZonedDateTime.now())
 
-    val result : JsValue = Json.toJson(quote)
+    val result: JsValue = Json.toJson(quote)
 
     (result \ "ref").as[String] should be(quote.ref)
     (result \ "quote").as[String] should be("A quote")

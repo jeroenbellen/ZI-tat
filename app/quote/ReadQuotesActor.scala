@@ -3,13 +3,15 @@ package quote
 import javax.inject.Inject
 
 import akka.actor.Actor
-import quote.ReadQuotesActor.FindAll
+import quote.ReadQuotesActor.{FindAll, FindOne}
 
 import scala.concurrent.Future
 
 object ReadQuotesActor {
 
-  case class FindAll()
+  case class FindAll(userRef: String)
+
+  case class FindOne(userRef: String, ref: String)
 
 }
 
@@ -19,8 +21,12 @@ class ReadQuotesActor @Inject()(ds: QuotesDataStore) extends Actor {
   import context.dispatcher
 
   override def receive: Receive = {
-    case FindAll() => Future {
-      ds.findAll()
+    case FindAll(userRef) => Future {
+      ds.findAll(userRef)
+    } pipeTo sender
+
+    case FindOne(userRef, ref) => Future {
+      ds.findOne(userRef, ref)
     } pipeTo sender
   }
 

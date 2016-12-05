@@ -9,6 +9,7 @@ import play.api.routing.sird._
 class QuotesRouter @Inject()(resource: QuotesResource) extends SimpleRouter {
 
   override def routes: Routes = {
-    case GET(p"/users/$userRef/quotes") => resource.index
+    case GET(p"/users/$userRef/quotes") => resource.index(userRef)
+    case GET(p"/users/$userRef/quotes/$ref") => resource.getOne(userRef, ref)
   }
 }

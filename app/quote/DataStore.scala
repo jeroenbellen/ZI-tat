@@ -30,13 +30,21 @@ class QuotesDataStore @Inject()(configuration: Configuration) {
     configuration.getString("aws.secret_access_key").get
   )
 
-  def findAll(): List[Quote] = {
+  def findAll(userRef: String): List[Quote] =
     QuotesTable.query.
-      filter(f => f.userRef -> DynamoDBCondition.eq("me") :: Nil).
+      filter(f => f.userRef -> DynamoDBCondition.eq(userRef) :: Nil).
       limit(1000).
       list[QuoteRow].
 
-      map(row => Quote(row.ref, row.quote, row.author)).
+      map(row => Quote(row.ref, userRef, row.quote, row.author)).
       toList
-  }
+
+  def findOne(userRef: String, ref: String): Option[Quote] =
+    QuotesTable.query.
+      filter(f => List(f.userRef -> DynamoDBCondition.eq(userRef), f.ref -> DynamoDBCondition.eq(ref))).
+      limit(1).
+      list[QuoteRow].
+
+      map(row => Quote(row.ref, userRef, row.quote, row.author)).
+      find(f => true)
 }
