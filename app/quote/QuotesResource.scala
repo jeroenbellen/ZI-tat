@@ -1,8 +1,8 @@
 package quote
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Named, Singleton}
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
 import play.api.libs.json.Json
@@ -14,12 +14,9 @@ import scala.concurrent.duration._
 
 
 @Singleton
-class QuotesResource @Inject()(quotesAction: QuotesAction)(implicit ex: ExecutionContext) {
+class QuotesResource @Inject()(quotesAction: QuotesAction, @Named("readQuotesActor") readActor: ActorRef)(implicit ex: ExecutionContext) {
 
-  implicit val timeout: Timeout = Timeout(100 nano)
-  implicit lazy val system = ActorSystem()
-
-  val readActor = system.actorOf(Props(classOf[ReadQuotesActor]))
+  implicit val timeout: Timeout = 1.seconds
 
   def index: Action[AnyContent] = {
     quotesAction async {

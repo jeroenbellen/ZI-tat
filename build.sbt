@@ -8,3 +8,5 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test
 libraryDependencies += ws
+
+libraryDependencies += "jp.co.bizreach" % "aws-dynamodb-scala_2.11" % "0.0.4"
