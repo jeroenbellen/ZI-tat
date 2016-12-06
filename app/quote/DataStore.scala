@@ -1,5 +1,6 @@
 package quote
 
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import awscala.dynamodbv2.{DynamoDB, DynamoDBCondition}
@@ -18,6 +19,7 @@ object QuotesTable extends DynamoTable {
 }
 
 case class QuoteRow(ref: String,
+                    user_ref: String,
                     quote: String,
                     author: String)
 
@@ -47,4 +49,15 @@ class QuotesDataStore @Inject()(configuration: Configuration) {
 
       map(row => Quote(row.ref, userRef, row.quote, row.author)).
       find(f => true)
+
+  def create(command: CreateQuoteCommand): String = {
+    val row: QuoteRow = QuoteRow(
+      UUID.randomUUID().toString,
+      command.userRef,
+      command.quote,
+      command.author
+    )
+    QuotesTable.put(row)
+    row.ref
+  }
 }

@@ -1,6 +1,6 @@
 import com.google.inject.AbstractModule
 import play.api.libs.concurrent.AkkaGuiceSupport
-import quote.ReadQuotesActor
+import quote.{ReadQuotesActor, WriteQuotesActor}
 
 class Module
   extends AbstractModule
@@ -8,5 +8,6 @@ class Module
 
   override def configure(): Unit = {
     bindActor[ReadQuotesActor]("readQuotesActor")
+    bindActor[WriteQuotesActor]("writeQuotesActor")
   }
 }
