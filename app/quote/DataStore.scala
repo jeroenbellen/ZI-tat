@@ -50,9 +50,9 @@ class QuotesDataStore @Inject()(configuration: Configuration) {
       map(row => Quote(row.ref, userRef, row.quote, row.author)).
       find(f => true)
 
-  def create(command: CreateQuoteCommand): String = {
+  def put(command: PutQuoteCommand): String = {
     val row: QuoteRow = QuoteRow(
-      UUID.randomUUID().toString,
+      command.ref,
       command.userRef,
       command.quote,
       command.author
@@ -60,4 +60,5 @@ class QuotesDataStore @Inject()(configuration: Configuration) {
     QuotesTable.put(row)
     row.ref
   }
+
 }

@@ -12,5 +12,6 @@ class QuotesRouter @Inject()(resource: QuotesResource) extends SimpleRouter {
     case GET(p"/users/$userRef/quotes") => resource.index(userRef)
     case POST(p"/users/$userRef/quotes") => resource.create(userRef)
     case GET(p"/users/$userRef/quotes/$ref") => resource.getOne(userRef, ref)
+    case PUT(p"/users/$userRef/quotes/$ref") => resource.update(userRef, ref)
   }
 }

@@ -1,21 +1,23 @@
 package quote
 
+import java.util.UUID
 import javax.inject.{Inject, Named, Singleton}
 
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, Results}
+import play.api.mvc.{Action, AnyContent, Result, Results}
 import quote.ReadQuotesActor.{FindAll, FindOne}
-import quote.WriteQuotesActor.Create
+import quote.WriteQuotesActor.{Put, PutIfExist}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
-case class CreateQuoteCommand(userRef: String,
-                              quote: String,
-                              author: String)
+case class PutQuoteCommand(userRef: String,
+                           quote: String,
+                           author: String,
+                           ref: String)
 
 @Singleton
 class QuotesResource @Inject()(quotesAction: QuotesAction,
@@ -44,21 +46,39 @@ class QuotesResource @Inject()(quotesAction: QuotesAction,
 
   def create(userRef: String): Action[AnyContent] =
     quotesAction async {
-      implicit request => {
-        {
-          for (
-            quote <- request.body.asJson.flatMap(json => (json \ "quote").asOpt[String]);
-            author <- request.body.asJson.flatMap(json => (json \ "author").asOpt[String])
-          ) yield CreateQuoteCommand(userRef, quote, author)
-
-        } match {
-          case Some(command) =>
-            (writeActor ? Create(command)).
-              mapTo[String].
-              map(ref => Results.Created.withHeaders("Location" -> s"http://localhost:9000/users/${command.userRef}/quotes/$ref"))
-
-          case None => Future.successful(Results.BadRequest)
-        }
+      implicit request => asCommand(userRef, UUID.randomUUID().toString, request) match {
+        case Some(command) => put(command)
+        case None => Future.successful(Results.BadRequest)
       }
     }
+
+  def update(userRef: String, ref: String): Action[AnyContent] =
+    quotesAction async {
+      implicit request => asCommand(userRef, ref, request) match {
+        case Some(command) => putIfExist(command)
+        case None => Future.successful(Results.BadRequest)
+      }
+    }
+
+  private def put(command: PutQuoteCommand): Future[Result] = {
+    (writeActor ? Put(command)).
+      mapTo[String].
+      map(ref => Results.Created.withHeaders("Location" -> s"http://localhost:9000/users/${command.userRef}/quotes/$ref"))
+  }
+
+  private def asCommand(userRef: String, ref: String, request: QuotesRequest[AnyContent]): Option[PutQuoteCommand] = {
+    for (
+      quote <- request.body.asJson.flatMap(json => (json \ "quote").asOpt[String]);
+      author <- request.body.asJson.flatMap(json => (json \ "author").asOpt[String])
+    ) yield PutQuoteCommand(userRef, quote, author, ref)
+  }
+
+  private def putIfExist(command: PutQuoteCommand): Future[Result] = {
+    (writeActor ? PutIfExist(command)).
+      mapTo[Option[String]].
+      map {
+        case Some(_) => Results.NoContent
+        case None => Results.NotFound
+      }
+  }
 }
