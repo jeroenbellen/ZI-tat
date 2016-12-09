@@ -9,7 +9,7 @@ import akka.util.Timeout
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result, Results}
 import quote.ReadQuotesActor.{FindAll, FindOne}
-import quote.WriteQuotesActor.{Put, PutIfExist}
+import quote.WriteQuotesActor.{Delete, Put, PutIfExist}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -58,6 +58,16 @@ class QuotesResource @Inject()(quotesAction: QuotesAction,
         case Some(command) => putIfExist(command)
         case None => Future.successful(Results.BadRequest)
       }
+    }
+
+  def delete(userRef: String, ref: String): Action[AnyContent] =
+    quotesAction async {
+      implicit request => (writeActor ? Delete(userRef, ref)).
+        mapTo[Option[Any]].
+        map {
+          case Some(_) => Results.NoContent
+          case None => Results.NotFound
+        }
     }
 
   private def put(command: PutQuoteCommand): Future[Result] = {

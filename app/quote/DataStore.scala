@@ -1,6 +1,5 @@
 package quote
 
-import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import awscala.dynamodbv2.{DynamoDB, DynamoDBCondition}
@@ -60,5 +59,7 @@ class QuotesDataStore @Inject()(configuration: Configuration) {
     QuotesTable.put(row)
     row.ref
   }
+
+  def delete(userRef: String, ref: String) = QuotesTable.delete(userRef, ref)
 
 }
